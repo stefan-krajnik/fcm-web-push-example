@@ -91,7 +91,6 @@ limitations under the License.
   const messaging = getMessaging();
   const tokenDivId = 'token_div';
   const permissionDivId = 'permission_div';
-  let isMessageListenerRegistered = false
 
   async function postToServer(url, data) {
     let response = await fetch(url, {
@@ -127,21 +126,24 @@ limitations under the License.
         updateUIForPushPermissionRequired();
         setTokenSentToServer(false);
       }
-      if (!isMessageListenerRegistered) {
-        isMessageListenerRegistered = true
-        navigator.serviceWorker.addEventListener('message', (event) => {
-          const {messageType, notification} = event.data
-          if (messageType === 'notification-clicked' && notification.click_action) {
-            window.location.href = notification.click_action
-          }
-        })
-      }
     }).catch((err) => {
       console.log('An error occurred while retrieving token. ', err);
       updateUIForPushPermissionRequired();
       setTokenSentToServer(false);
     });
   }
+
+  onMessage(messaging, (payload) => {
+    if (payload.messageType === 'notification') {
+      window.location.href = payload.notification.click_action
+    } else if (payload.notification) {
+      const { link } = payload.fcmOptions
+      const notification = new window.Notification(payload.notification.title, payload.notification)
+      notification.onclick = () => {
+        window.location.href = link
+      }
+    }
+  })
 
 
   function showToken(currentToken) {

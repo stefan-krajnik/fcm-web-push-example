@@ -42,7 +42,6 @@ app.use(bodyparser.json())
 app.use(express.static('./'))
 
 app.post('/add-subscription', (request, response) => {
-  console.log(request.body)
   console.log(`Subscribing ${request.body.endpoint}`)
   subscriptions.push(request.body)
   response.sendStatus(200)
@@ -57,8 +56,12 @@ app.post('/remove-subscription', (request, response) => {
 app.post('/notify-me', (request, response) => {
   console.log(`Notifying ${request.body.endpoint}`)
   const subscription = subscriptions.find(({ endpoint }) => endpoint === request.body.endpoint)
-  sendNotifications([subscription])
-  response.sendStatus(200)
+  if (subscription) {
+    sendNotifications([subscription])
+    response.sendStatus(200)
+  } else {
+    response.sendStatus(409)
+  }
 })
 
 app.post('/notify-all', (request, response) => {
